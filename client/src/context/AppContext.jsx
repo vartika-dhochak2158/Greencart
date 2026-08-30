@@ -12,7 +12,7 @@ export const AppContext = createContext(null);
 export const AppContextProvider = ({ children }) => {
     const navigate = useNavigate();
     const currency = "₹";
-    const backendUrl = "http://localhost:4000";
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     const [products, setProducts] = useState(dummyProducts || []);
     const [cartItems, setCartItems] = useState({});
