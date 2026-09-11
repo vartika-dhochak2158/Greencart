@@ -117,6 +117,8 @@ const AddAddress = () => {
                 const { data } = await axios.post(url, {
                     address,
                     items: orderItems,
+                }, {
+                    withCredentials: true
                 })
 
                 if (data.success) {
