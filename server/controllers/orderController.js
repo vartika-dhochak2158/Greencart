@@ -1,8 +1,14 @@
+import Razorpay from "razorpay";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import stripe from "stripe";
 import User from "../models/User.js";
 import mongoose from "mongoose";
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // Place Order COD : /api/order/cod
 export const placeOrderCOD = async (req, res) => {
@@ -61,7 +67,141 @@ export const placeOrderCOD = async (req, res) => {
         return res.json({ success: false, message: error.message });
     }
 };
+// Create Razorpay Order : /api/order/razorpay
+export const createRazorpayOrder = async (req, res) => {
+    try {
+        const { userId, items, address } = req.body;
 
+        if (!address || !items || items.length === 0) {
+            return res.json({
+                success: false,
+                message: "Invalid order data"
+            });
+        }
+
+        let amount = 0;
+        const validItems = [];
+
+        for (const item of items) {
+            if (!mongoose.Types.ObjectId.isValid(item.product)) {
+                continue;
+            }
+
+            const product = await Product.findById(item.product);
+
+            if (!product) {
+                continue;
+            }
+
+            const price = product.offerPrice || product.price;
+
+            amount += price * item.quantity;
+
+            validItems.push({
+                product: product._id,
+                quantity: item.quantity
+            });
+        }
+
+        if (validItems.length === 0) {
+            return res.json({
+                success: false,
+                message: "No valid products found"
+            });
+        }
+
+        // Add 2% platform/service charge
+        amount += Math.floor(amount * 0.02);
+
+        // Create our order in MongoDB
+        const order = await Order.create({
+            userId,
+            items: validItems,
+            amount,
+            address,
+            paymentType: "Online",
+            isPaid: false,
+        });
+
+        // Razorpay expects amount in paise
+        const razorpayOrder = await razorpay.orders.create({
+            amount: Math.round(amount * 100),
+            currency: "INR",
+            receipt: order._id.toString(),
+        });
+
+        return res.json({
+            success: true,
+            orderId: order._id,
+            razorpayOrder
+        });
+
+    } catch (error) {
+        console.error("Razorpay Order Error:", error);
+
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+// Verify Razorpay Payment : /api/order/razorpay/verify
+export const verifyRazorpayPayment = async (req, res) => {
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            orderId
+        } = req.body;
+
+        const crypto = await import("crypto");
+
+        const generatedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest("hex");
+
+        if (generatedSignature !== razorpay_signature) {
+            return res.json({
+                success: false,
+                message: "Payment verification failed"
+            });
+        }
+
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        order.isPaid = true;
+        await order.save();
+
+        // Clear user's cart
+        if (mongoose.Types.ObjectId.isValid(order.userId)) {
+            await User.findByIdAndUpdate(order.userId, {
+                cartItems: {}
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Payment verified successfully"
+        });
+
+    } catch (error) {
+        console.error("Razorpay Verification Error:", error);
+
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 // Place Order Stripe : /api/order/stripe
 export const placeOrderStripe = async (req, res) => {
     try {
