@@ -13,12 +13,16 @@ import Home from './pages/Home';
 import AllProducts from './pages/AllProducts';
 import Explore from './pages/Explore';
 import Profile from './pages/Profile';
+import Addresses from './pages/Addresses';
+import LoginSecurity from './pages/LoginSecurity';
 import ProductCategory from './pages/ProductCategory';
 import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import AddAddress from './pages/AddAddress';
 import MyOrders from './pages/MyOrders';
+import ManageAddress from './pages/ManageAddress';
+
 
 // Seller Portal Pages
 import SellerLogin from './components/seller/SellerLogin';
@@ -82,6 +86,9 @@ const App = () => {
                         <Route path="/explore" element={<Explore />} />
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/addresses" element={<Addresses />} />
+                        <Route path="/addresses" element={<ManageAddress />} />
+                        <Route path="/login-security" element={<LoginSecurity />} />
                         <Route path="/products/:category" element={<ProductCategory />} />
                         <Route path="/products/:category/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />

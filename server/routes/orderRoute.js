@@ -14,6 +14,7 @@ const orderRouter = express.Router();
 
 
 orderRouter.post('/cod', authUser, placeOrderCOD)
+orderRouter.post('/razorpay', authUser, createRazorpayOrder)
 orderRouter.post('/razorpay/verify', authUser, verifyRazorpayPayment)
 orderRouter.get('/user', authUser, getUserOrders)
 orderRouter.get('/seller', authSeller, getAllOrders)

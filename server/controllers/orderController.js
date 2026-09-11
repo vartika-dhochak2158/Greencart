@@ -72,6 +72,12 @@ export const createRazorpayOrder = async (req, res) => {
     try {
         const { userId, items, address } = req.body;
 
+        console.log("========== RAZORPAY DEBUG ==========");
+        console.log("USER ID:", userId);
+        console.log("ITEMS:", JSON.stringify(items, null, 2));
+        console.log("ADDRESS:", JSON.stringify(address, null, 2));
+        console.log("====================================");
+
         if (!address || !items || items.length === 0) {
             return res.json({
                 success: false,
@@ -83,13 +89,18 @@ export const createRazorpayOrder = async (req, res) => {
         const validItems = [];
 
         for (const item of items) {
-            if (!mongoose.Types.ObjectId.isValid(item.product)) {
+
+            if (!item?.product || !item?.quantity || item.quantity <= 0) {
                 continue;
             }
 
+            // Your products use custom IDs such as:
+            // dy_amul_gold_01
+            // vg_beans_01
             const product = await Product.findById(item.product);
 
             if (!product) {
+                console.log("PRODUCT NOT FOUND:", item.product);
                 continue;
             }
 
@@ -110,20 +121,40 @@ export const createRazorpayOrder = async (req, res) => {
             });
         }
 
-        // Add 2% platform/service charge
+        // 2% additional charge
         amount += Math.floor(amount * 0.02);
 
-        // Create our order in MongoDB
+        const orderCreatedAt = new Date();
+
+// Random same-day delivery timeline
+        const packedAt = new Date(
+            orderCreatedAt.getTime() + (30 + Math.random() * 60) * 60 * 1000
+        );
+
+        const onTheWayAt = new Date(
+            packedAt.getTime() + (30 + Math.random() * 90) * 60 * 1000
+        );
+
+        const deliveredAt = new Date(
+            onTheWayAt.getTime() + (60 + Math.random() * 180) * 60 * 1000
+        );
+
         const order = await Order.create({
             userId,
             items: validItems,
             amount,
             address,
+            status: "Order Placed",
+
+            packedAt,
+            onTheWayAt,
+            deliveredAt,
+
             paymentType: "Online",
             isPaid: false,
+            createdAt: orderCreatedAt
         });
 
-        // Razorpay expects amount in paise
         const razorpayOrder = await razorpay.orders.create({
             amount: Math.round(amount * 100),
             currency: "INR",
@@ -137,6 +168,7 @@ export const createRazorpayOrder = async (req, res) => {
         });
 
     } catch (error) {
+
         console.error("Razorpay Order Error:", error);
 
         return res.json({
@@ -206,6 +238,7 @@ export const verifyRazorpayPayment = async (req, res) => {
 export const placeOrderStripe = async (req, res) => {
     try {
         const { userId, items, address } = req.body;
+
         const { origin } = req.headers;
 
         if (!address || !items || items.length === 0) {
@@ -252,13 +285,35 @@ export const placeOrderStripe = async (req, res) => {
         // Add 2% Tax Charge
         amount += Math.floor(amount * 0.02);
 
+        const orderCreatedAt = new Date();
+
+// Random same-day delivery timeline
+        const packedAt = new Date(
+            orderCreatedAt.getTime() + (30 + Math.random() * 60) * 60 * 1000
+        );
+
+        const onTheWayAt = new Date(
+            packedAt.getTime() + (30 + Math.random() * 90) * 60 * 1000
+        );
+
+        const deliveredAt = new Date(
+            onTheWayAt.getTime() + (60 + Math.random() * 180) * 60 * 1000
+        );
+
         const order = await Order.create({
-            userId: mongoose.Types.ObjectId.isValid(userId) ? userId : new mongoose.Types.ObjectId(),
+            userId,
             items: validItems,
             amount,
-            address: mongoose.Types.ObjectId.isValid(address) ? address : new mongoose.Types.ObjectId(),
-            paymentType: "Online",
+            address,
+            status: "Order Placed",
+
+            packedAt,
+            onTheWayAt,
+            deliveredAt,
+
+            paymentType: "COD",
             isPaid: false,
+            createdAt: orderCreatedAt
         });
 
         // Stripe Gateway Initialize
@@ -350,21 +405,54 @@ export const stripeWebhooks = async (request, response) => {
 export const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.body;
+
         const query = {
-            $or: [{ paymentType: "COD" }, { isPaid: true }],
+            userId,
+            $or: [
+                { paymentType: "COD" },
+                { isPaid: true }
+            ]
         };
-        if (mongoose.Types.ObjectId.isValid(userId)) {
-            query.userId = userId;
-        }
+
         const orders = await Order.find(query)
-            .populate("items.product address")
+            .populate("items.product")
             .sort({ createdAt: -1 });
-        res.json({ success: true, orders });
+
+        const now = new Date();
+
+        const updatedOrders = orders.map((order) => {
+            const orderData = order.toObject();
+
+            if (order.deliveredAt && now >= order.deliveredAt) {
+                orderData.status = "Delivered";
+            }
+            else if (order.onTheWayAt && now >= order.onTheWayAt) {
+                orderData.status = "On the way";
+            }
+            else if (order.packedAt && now >= order.packedAt) {
+                orderData.status = "Packed";
+            }
+            else {
+                orderData.status = "Order Placed";
+            }
+
+            return orderData;
+        });
+
+        res.json({
+            success: true,
+            orders: updatedOrders
+        });
+
     } catch (error) {
-        res.json({ success: false, message: error.message });
+        console.error("Get User Orders Error:", error);
+
+        res.json({
+            success: false,
+            message: error.message
+        });
     }
 };
-
 // Get All Orders (for seller / admin) : /api/order/seller
 export const getAllOrders = async (req, res) => {
     try {

@@ -1,8 +1,12 @@
 import User from "../models/User.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 
-// Register User : /api/user/register
+const googleClient = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID
+);
+// Register User: /api/user/register
 export const register = async (req, res)=>{
     try {
         const { name, email, password } = req.body;
@@ -100,3 +104,84 @@ export const logout = async (req, res)=>{
         res.json({ success: false, message: error.message });
     }
 }
+// Google Login : /api/user/google
+export const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.json({
+                success: false,
+                message: "Google credential is required"
+            });
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+
+        const {
+            sub: googleId,
+            email,
+            name
+        } = payload;
+
+        if (!email || !googleId) {
+            return res.json({
+                success: false,
+                message: "Invalid Google account"
+            });
+        }
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                name: name || "Google User",
+                email,
+                googleId,
+                cartItems: {}
+            });
+        } else {
+            if (!user.googleId) {
+                user.googleId = googleId;
+                await user.save();
+            }
+        }
+
+        const token = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite:
+                process.env.NODE_ENV === 'production'
+                    ? 'none'
+                    : 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.json({
+            success: true,
+            user: {
+                email: user.email,
+                name: user.name
+            }
+        });
+
+    } catch (error) {
+        console.log("Google Login Error:", error.message);
+
+        return res.json({
+            success: false,
+            message: "Google authentication failed"
+        });
+    }
+};

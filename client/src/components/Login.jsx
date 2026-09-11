@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
@@ -154,6 +155,55 @@ const Login = () => {
                 >
                     {currState === 'Sign Up' ? 'Create Account' : 'Login'}
                 </button>
+                <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gray-200"></div>
+                    <span className="text-xs text-gray-400">OR</span>
+                    <div className="h-px flex-1 bg-gray-200"></div>
+                </div>
+
+                <div className="flex justify-center">
+                    <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                            console.log("GOOGLE RESPONSE:", credentialResponse);
+
+                            try {
+                                const { data } = await axios.post(
+                                    `${backendUrl}/api/user/google`,
+                                    {
+                                        credential: credentialResponse.credential
+                                    },
+                                    {
+                                        withCredentials: true
+                                    }
+                                );
+
+                                if (data.success) {
+                                    setUser(data.user);
+                                    setShowUserLogin(false);
+                                    toast.success("Logged in with Google!");
+                                } else {
+                                    toast.error(
+                                        data.message ||
+                                        "Google login failed"
+                                    );
+                                }
+                            } catch (error) {
+                                console.error(
+                                    "Google login error:",
+                                    error
+                                );
+
+                                toast.error(
+                                    error.response?.data?.message ||
+                                    "Google login failed"
+                                );
+                            }
+                        }}
+                        onError={() => {
+                            toast.error("Google login failed");
+                        }}
+                    />
+                </div>
             </form>
         </div>
     );

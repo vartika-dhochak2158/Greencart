@@ -27,6 +27,9 @@ export default function Navbar() {
 
     const {
         user,
+        setUser,
+        axios,
+        backendUrl,
         setShowUserLogin,
         getCartCount,
         search,
@@ -38,6 +41,7 @@ export default function Navbar() {
     const [isFocused, setIsFocused] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showAddressMenu, setShowAddressMenu] = useState(false);
+    const [showAccountMenu, setShowAccountMenu] = useState(false);
     const [selectedAddress, setSelectedAddress] = useState('Home · Saved delivery address');
 
     // Filter live search suggestions based on typing
@@ -109,6 +113,21 @@ export default function Navbar() {
         e.preventDefault();
         setIsFocused(false);
         navigate('/explore');
+    };
+    const handleLogout = async () => {
+        try {
+            const { data } = await axios.get(
+                `${backendUrl}/api/user/logout`
+            );
+
+            if (data?.success) {
+                setUser(null);
+                setShowAccountMenu(false);
+                navigate('/');
+            }
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (
@@ -382,26 +401,91 @@ export default function Navbar() {
                             </>
                         )}
                     </div>
-
                     {/* Account Button */}
                     {!user ? (
                         <button
-                            onClick={() => (setShowUserLogin ? setShowUserLogin(true) : navigate('/login'))}
+                            onClick={() =>
+                                setShowUserLogin
+                                    ? setShowUserLogin(true)
+                                    : navigate('/login')
+                            }
                             className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold shadow-sm transition"
                         >
                             <User className="size-3.5" />
                             Login
                         </button>
                     ) : (
-                        <button
-                            onClick={() => navigate('/profile')}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:border-emerald-300 bg-white transition shadow-sm"
-                        >
-                            <span className="grid size-6 place-items-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
-                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                            </span>
-                            <span className="text-xs font-bold text-slate-700">Account</span>
-                        </button>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:border-emerald-300 bg-white transition shadow-sm"
+                            >
+            <span className="grid size-6 place-items-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
+                {user.name
+                    ? user.name.charAt(0).toUpperCase()
+                    : 'U'}
+            </span>
+
+                                <span className="text-xs font-bold text-slate-700">
+                Account
+            </span>
+
+                                <ChevronDown
+                                    className={`size-3.5 text-slate-400 transition-transform ${
+                                        showAccountMenu ? 'rotate-180' : ''
+                                    }`}
+                                />
+                            </button>
+
+                            {showAccountMenu && (
+                                <>
+                                    {/* Outside click */}
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setShowAccountMenu(false)}
+                                    />
+
+                                    {/* Account Dropdown */}
+                                    <div className="absolute right-0 top-12 z-50 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl">
+
+                                        {/* User Info */}
+                                        <div className="px-3 py-2.5 border-b border-slate-100 mb-1">
+                                            <p className="text-xs font-bold text-slate-800 truncate">
+                                                {user.name || 'User'}
+                                            </p>
+
+                                            <p className="text-[10px] text-slate-400 truncate">
+                                                {user.email}
+                                            </p>
+                                        </div>
+
+                                        {/* My Orders */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowAccountMenu(false)
+                                                navigate('/my-orders')
+                                            }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition"
+                                        >
+                                            <PackageCheck className="size-4" />
+                                            My Orders
+                                        </button>
+
+                                        {/* Sign Out */}
+                                        <button
+                                            type="button"
+                                            onClick={handleLogout}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                                        >
+                                            <ArrowRight className="size-4 rotate-180" />
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     )}
 
                 </div>

@@ -125,10 +125,26 @@ export const AppContextProvider = ({ children }) => {
         return Math.floor(totalAmount * 100) / 100;
     };
 
+    const checkUserAuth = async () => {
+        try {
+            const { data } = await axios.get(
+                `${backendUrl}/api/user/is-auth`
+            );
 
+            if (data?.success) {
+                setUser(data.user);
+            } else {
+                setUser(null);
+            }
+        } catch (error) {
+            console.log("Auth check failed:", error.message);
+            setUser(null);
+        }
+    };
     useEffect(() => {
         fetchProducts();
         checkSellerAuth();
+        checkUserAuth();
     }, []);
 
     const value = {
