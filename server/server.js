@@ -1,5 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import connectDB from "./configs/db.js";
 
 import userRoute from "./routes/userRoute.js";
 import productRoute from "./routes/productRoute.js";
@@ -47,6 +49,8 @@ app.get("/", (req, res) => {
 
 
 const PORT = process.env.PORT || 5000;
+
+connectDB();
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
