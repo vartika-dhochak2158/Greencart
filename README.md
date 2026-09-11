@@ -1,12 +1,14 @@
 # 🛒 GreenCart — Full-Stack Grocery E-Commerce Platform
 
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Styling-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-GreenCart is a modern, full-stack grocery e-commerce web application designed to provide a seamless online shopping experience. Users can browse products, manage their shopping cart and wishlist, save delivery addresses, and securely place orders with online payments integration via Razorpay.
+GreenCart is a modern, full-stack grocery e-commerce web application designed to provide a seamless online shopping experience. Built using JavaScript and TypeScript across the stack, users can browse products, manage their shopping cart and wishlist, save delivery addresses, and securely place orders with online payments integration via Razorpay.
 
 ---
 
@@ -51,21 +53,25 @@ GreenCart is a modern, full-stack grocery e-commerce web application designed to
 
 ## 🛠️ Tech Stack
 
+### **Languages**
+- **JavaScript (ES6+)** — Core scripting logic across client and server
+- **TypeScript** — Strongly-typed development and strict type safety
+
 ### **Frontend**
-- **React & Vite** — Fast component-based UI development
+- **React & Vite** — Component-based UI development and ultra-fast bundling
 - **React Router** — Client-side routing
 - **Tailwind CSS** — Responsive, utility-first styling
 - **Axios** — HTTP client for API requests
 - **Lucide React** — Modern UI icons
-- **React Hot Toast** — Elegant notifications
-- **@react-oauth/google** — Google login integration
+- **React Hot Toast** — Interactive user notifications
+- **@react-oauth/google** — Google authentication integration
 
 ### **Backend**
-- **Node.js & Express.js** — RESTful API architecture
-- **MongoDB & Mongoose** — NoSQL database and data modeling
-- **JWT & bcryptjs** — Authentication and password hashing
-- **Razorpay SDK** — Payment gateway handling
-- **Google Auth Library** — Token verification
+- **Node.js & Express.js** — Scalable RESTful API backend architecture
+- **MongoDB & Mongoose** — NoSQL database and Object Data Modeling (ODM)
+- **JWT & bcryptjs** — Token authentication and secure password hashing
+- **Razorpay SDK** — Payment gateway integration
+- **Google Auth Library** — Token verification middleware
 
 ### **Cloud & Deployment**
 - **Frontend Hosting:** Vercel
@@ -89,6 +95,7 @@ greencart/
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   ├── package.json
+│   ├── tsconfig.json       # TypeScript configuration (if applicable)
 │   └── .env
 │
 ├── server/                 # Backend Node.js / Express Application
@@ -98,7 +105,7 @@ greencart/
 │   ├── models/             # Mongoose schemas (User, Product, Order, Address)
 │   ├── routes/             # API routing endpoints
 │   ├── seedProducts.js     # Database seeder script
-│   ├── server.js           # Entry point
+│   ├── server.js           # Server entry point
 │   ├── package.json
 │   └── .env
 │
