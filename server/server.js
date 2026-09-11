@@ -32,10 +32,10 @@ app.use(express.json());
 
 
 // API ROUTES
-app.use("/api/users", userRoute);
-app.use("/api/products", productRoute);
+app.use("/api/user", userRoute);
+app.use("/api/product", productRoute);
 app.use("/api/cart", cartRoute);
-app.use("/api/orders", orderRoute);
+app.use("/api/order", orderRoute);
 app.use("/api/address", addressRoute);
 app.use("/api/seller", sellerRoute);
 
