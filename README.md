@@ -107,6 +107,6 @@ greencart/
 │   ├── seedProducts.js     # Database seeder script
 │   ├── server.js           # Server entry point
 │   ├── package.json
-│   └── .env
+│   └── .env                #environment variables
 │
 └── README.md
